@@ -3,7 +3,7 @@ import random
 import os
 import time
 
-# --- 🛠️ 0. 系統配置 (必須在第一行) ---
+# --- 🛠️ 0. 系統配置 ---
 st.set_page_config(
     page_title="Foting - 阿美語海洋教室",
     page_icon="🐟",
@@ -11,18 +11,14 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- 🎨 1. CSS 美化 (水系主題：海洋藍/溪流青) ---
+# --- 🎨 1. CSS 美化 ---
 st.markdown("""
     <style>
-    /* 全局字體 */
     body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
-    
-    /* 標題樣式 */
     h1 { color: #0277BD; text-align: center; margin-bottom: 0px; }
     .subtitle { text-align: center; color: #455A64; margin-top: 5px; font-size: 18px; }
     .author-tag { text-align: center; color: #00838F; font-weight: bold; margin-bottom: 30px; font-size: 16px; }
     
-    /* 單字卡 (水藍色漸層) */
     .word-card {
         background: linear-gradient(135deg, #E1F5FE 0%, #ffffff 100%);
         padding: 20px;
@@ -30,7 +26,7 @@ st.markdown("""
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         text-align: center;
         margin-bottom: 15px;
-        border-bottom: 4px solid #0288D1; /* 深藍底線 */
+        border-bottom: 4px solid #0288D1;
         transition: transform 0.2s;
     }
     .word-card:hover { transform: translateY(-5px); }
@@ -39,7 +35,6 @@ st.markdown("""
     .chinese-text { font-size: 16px; color: #546E7A; }
     .source-tag { font-size: 12px; color: #90A4AE; text-align: right; font-style: italic; margin-top: 10px;}
     
-    /* 句子框 (淺青色背景) */
     .sentence-box {
         background-color: #E0F7FA;
         border-left: 5px solid #00BCD4;
@@ -50,7 +45,6 @@ st.markdown("""
     .sent-amis { font-size: 20px; color: #006064; font-weight: bold; }
     .sent-chi { font-size: 16px; color: #37474F; margin-top: 5px; }
 
-    /* 按鈕樣式 (海洋風格) */
     .stButton>button {
         width: 100%; 
         border-radius: 12px; 
@@ -66,8 +60,6 @@ st.markdown("""
         border-color: #039BE5; 
         color: #fff;
     }
-    
-    /* 進度條顏色 */
     .stProgress > div > div > div > div { background-color: #0288D1; }
     </style>
 """, unsafe_allow_html=True)
@@ -92,10 +84,9 @@ SENTENCE_DATA = [
     {"amis": "Mafana’ ci Kacaw a mitafokod to foting.", "chi": "Kacaw 善於網魚。", "icon": "👍", "audio": "sent_06.m4a"},
 ]
 
-# --- ⚙️ 3. Service Layer (核心邏輯) ---
+# --- ⚙️ 3. Service Layer (核心邏輯 - 路徑修正版) ---
 
 def safe_rerun():
-    """兼容不同版本的 Streamlit 重整指令"""
     try:
         st.rerun()
     except AttributeError:
@@ -105,28 +96,44 @@ def safe_rerun():
             st.stop()
 
 class ResourceManager:
-    """資源管理器：負責安全地讀取檔案"""
-    # 若您的 GitHub 資料夾結構不同，請修改這裡
-    BASE_AUDIO_PATH = "Teacher_Course22/audio"
+    """資源管理器：智慧路徑搜尋"""
+    
+    @staticmethod
+    def find_audio_path(filename: str):
+        """在多個可能的位置尋找檔案"""
+        # 優先搜尋 Teacher_Course23
+        candidates = [
+            f"Teacher_Course23/audio/{filename}",  # <--- 修正為 Course23
+            f"audio/{filename}",                   # 備用路徑
+            filename                               # 根目錄
+        ]
+        
+        for path in candidates:
+            if os.path.exists(path):
+                return path
+        return None
 
     @staticmethod
     def play_audio(filename: str):
-        """播放音檔，若檔案不存在則顯示提示"""
-        file_path = os.path.join(ResourceManager.BASE_AUDIO_PATH, filename)
+        """播放音檔，若找不到則顯示詳細除錯資訊"""
+        found_path = ResourceManager.find_audio_path(filename)
         
-        if os.path.exists(file_path):
+        if found_path:
             try:
-                with open(file_path, "rb") as f:
+                with open(found_path, "rb") as f:
                     audio_bytes = f.read()
                 st.audio(audio_bytes, format='audio/mp4')
             except Exception as e:
-                st.error(f"播放失敗: {e}")
+                st.error(f"播放錯誤: {e}")
         else:
-            # 溫馨提示，不報錯
-            st.warning(f"⚠️ 找不到音檔: {filename} (請確認檔案是否已上傳至 {file_path})")
+            st.warning(f"⚠️ 找不到檔案: {filename}")
+            # 顯示幫助資訊
+            with st.expander("🔧 為什麼沒聲音？(點擊查看)"):
+                st.write(f"系統在找這些路徑：")
+                st.code(f"Teacher_Course23/audio/{filename}\naudio/{filename}")
+                st.write("請確認您的 GitHub 資料夾名稱是否為 Teacher_Course23")
 
 class QuizEngine:
-    """題庫生成引擎"""
     @staticmethod
     def generate_quiz(num_questions=4):
         pool = VOCAB_DATA.copy()
@@ -154,7 +161,6 @@ class QuizEngine:
 # --- 📱 4. Presentation Layer (UI 介面) ---
 
 def main():
-    # 標題區 (已更新講師資訊)
     st.markdown("<h1 style='text-align: center;'>🐟 Foting 魚的世界</h1>", unsafe_allow_html=True)
     st.markdown("<div class='subtitle'>阿美語海洋教室 | 主題：捕魚與飲食文化</div>", unsafe_allow_html=True)
     st.markdown("<div class='author-tag'>講師：高春美 | 教材提供者：高春美</div>", unsafe_allow_html=True)
@@ -166,7 +172,6 @@ def main():
         st.session_state.quiz_questions = QuizEngine.generate_quiz()
         st.session_state.init = True
 
-    # 分頁導航
     tab1, tab2 = st.tabs(["📖 學習單字與句型", "🎲 隨機挑戰"])
 
     # === Tab 1: 學習模式 ===
@@ -207,8 +212,6 @@ def main():
         
         if current_idx < len(questions):
             q_data = questions[current_idx]
-            
-            # 進度條
             progress = current_idx / len(questions)
             st.progress(progress)
             
@@ -217,7 +220,6 @@ def main():
             if st.button("🔊 聽聽看", key=f"quiz_audio_{current_idx}"):
                 ResourceManager.play_audio(q_data['audio'])
             
-            # 選項區
             cols = st.columns(len(q_data['options']))
             if f"answered_{current_idx}" not in st.session_state:
                 for idx, opt in enumerate(q_data['options']):
@@ -235,13 +237,10 @@ def main():
                         safe_rerun()
             else:
                 st.info("載入下一題中...")
-                
         else:
-            # 結算畫面
             st.progress(1.0)
             st.balloons()
             final_score = st.session_state.score
-            
             st.markdown(f"""
             <div style="text-align: center; padding: 30px; background-color: #E1F5FE; border-radius: 20px; border: 2px solid #0288D1;">
                 <h2 style="color: #01579B;">測驗完成！</h2>
@@ -249,12 +248,31 @@ def main():
                 <p>Mafana’ kiso to foting! (你很懂魚喔！)</p>
             </div>
             """, unsafe_allow_html=True)
-            
             if st.button("🔄 再玩一次"):
                 for key in list(st.session_state.keys()):
                     del st.session_state[key]
                 safe_rerun()
 
-# --- 程式入口點 ---
+    # --- 🔍 除錯工具 (Debug Tool) ---
+    with st.sidebar:
+        st.header("🔧 開發者工具")
+        st.write("目前路徑檢查：")
+        try:
+            files = os.listdir(".")
+            if "Teacher_Course23" in files:
+                st.success("✅ 找到 Teacher_Course23 資料夾")
+                if os.path.exists("Teacher_Course23/audio"):
+                    audio_files = os.listdir("Teacher_Course23/audio")
+                    st.write(f"📂 audio 內有 {len(audio_files)} 個檔案")
+                    st.code("\n".join(audio_files[:5]))
+                else:
+                    st.error("❌ 找不到 audio 子資料夾")
+            else:
+                st.warning("⚠️ 沒找到 Teacher_Course23，請確認 GitHub 結構")
+                st.write("目前根目錄檔案：")
+                st.code("\n".join(files[:5]))
+        except Exception as e:
+            st.error(f"讀取錯誤: {e}")
+
 if __name__ == "__main__":
     main()
