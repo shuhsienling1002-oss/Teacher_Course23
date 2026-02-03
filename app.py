@@ -3,7 +3,7 @@ import random
 import os
 import time
 
-# --- \U0001F6E0️ 0. 系統配置 (必須在第一行) ---
+# --- 🛠️ 0. 系統配置 (必須在第一行) ---
 st.set_page_config(
     page_title="Foting - 阿美語海洋教室",
     page_icon="🐟",
@@ -11,15 +11,16 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# --- \U0001F3A8 1. CSS 美化 (水系主題：海洋藍/溪流青) ---
+# --- 🎨 1. CSS 美化 (水系主題：海洋藍/溪流青) ---
 st.markdown("""
     <style>
     /* 全局字體 */
     body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
     
     /* 標題樣式 */
-    h1 { color: #0277BD; text-align: center; }
-    p { color: #455A64; }
+    h1 { color: #0277BD; text-align: center; margin-bottom: 0px; }
+    .subtitle { text-align: center; color: #455A64; margin-top: 5px; font-size: 18px; }
+    .author-tag { text-align: center; color: #00838F; font-weight: bold; margin-bottom: 30px; font-size: 16px; }
     
     /* 單字卡 (水藍色漸層) */
     .word-card {
@@ -71,7 +72,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- \U0001F4C2 2. Data Layer (數據層) ---
+# --- 📂 2. Data Layer (數據層) ---
 VOCAB_DATA = [
     {"amis": "Foting", "chi": "魚", "icon": "🐟", "source": "核心單字", "audio": "foting.m4a"},
     {"amis": "Misalilan", "chi": "用魚網抓來的", "icon": "🕸️", "source": "動作/描述", "audio": "misalilan.m4a"},
@@ -105,8 +106,7 @@ def safe_rerun():
 
 class ResourceManager:
     """資源管理器：負責安全地讀取檔案"""
-    # 注意：這裡假設您的 audio 資料夾在 Teacher_Course22/audio
-    # 如果您的 GitHub 結構不同，請修改這裡
+    # 若您的 GitHub 資料夾結構不同，請修改這裡
     BASE_AUDIO_PATH = "Teacher_Course22/audio"
 
     @staticmethod
@@ -151,12 +151,13 @@ class QuizEngine:
             })
         return quiz_set
 
-# --- \U0001F4F1 4. Presentation Layer (UI 介面) ---
+# --- 📱 4. Presentation Layer (UI 介面) ---
 
 def main():
-    # 標題區
+    # 標題區 (已更新講師資訊)
     st.markdown("<h1 style='text-align: center;'>🐟 Foting 魚的世界</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center;'>阿美語海洋教室 | 主題：捕魚與飲食文化</p>", unsafe_allow_html=True)
+    st.markdown("<div class='subtitle'>阿美語海洋教室 | 主題：捕魚與飲食文化</div>", unsafe_allow_html=True)
+    st.markdown("<div class='author-tag'>講師：高春美 | 教材提供者：高春美</div>", unsafe_allow_html=True)
 
     # 初始化 Session State
     if 'init' not in st.session_state:
